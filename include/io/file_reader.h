@@ -1,5 +1,5 @@
 //
-// Created by Grayson on 11/7/19.
+// Created by Grayson Cox on 11/7/19.
 //
 
 #ifndef CONCURRENT_RED_BLACK_TREE_FILE_READER_H

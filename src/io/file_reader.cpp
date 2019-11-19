@@ -16,9 +16,14 @@ file_reader::~file_reader() {
 
 std::string file_reader::read_line() {
     std::string str;
-//    getline(input_file, str);
-    input_file >> str;
+    getline(input_file, str);
     return str;
+}
+
+std::string file_reader::read_token() {
+	std::string str;
+	input_file >> str;
+	return str;
 }
 
 bool file_reader::is_open() {

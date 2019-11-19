@@ -6,7 +6,7 @@ OBJS = $(SRCS:.cpp=.o)
 DEPS = Makefile.depend
 
 INCLUDES = -I./include
-CXXFLAGS = -O2 -Wall $(INCLUDES)
+CXXFLAGS = -std=c++11 -O2 -Wall $(INCLUDES)
 LDFLAGS = -lm
 
 

@@ -6,35 +6,11 @@
 #include <io/file_writer.h>
 #include "io/file_reader.h"
 #include <model/rbtree.h>
+#include "model/thread.h"
 
 using namespace std;
 
 const string INPUT_FILE = "/Users/administrator/Documents/ISU/COMS352/PA2/Grayson_Cox_Project2/src/input.txt";
-
-typedef enum {
-	SEARCH,
-	INSERT,
-	DELETE,
-	UNKNOWN
-} operation_t;
-
-void insert_test(initializer_list<int> keys) {
-	rbtree t;
-	for (auto k : keys) {
-		cout << "Inserting " << k << " ..." << endl;
-		t.insert_node(k);
-		cout << t.to_string() << endl;
-	}
-	for (auto k : keys) {
-		int x = k + random() % 2;
-		cout << "Searching for " << x << " ... ";
-		if (t.search(x)) {
-			cout << "found" << endl;
-		} else {
-			cout << "not found" << endl;
-		}
-	}
-}
 
 template<typename T>
 vector<T> to_vector(initializer_list<T> list) {
@@ -44,10 +20,6 @@ vector<T> to_vector(initializer_list<T> list) {
 	}
 	return v;
 }
-
-//
-// 45b,1b,f,34r,f,f,97b,f,110r,f,f
-//
 
 int main() {
 	initializer_list<rbnode *> nodes = {
@@ -64,6 +36,23 @@ int main() {
 			nullptr
 	};
 	rbtree t(to_vector(nodes));
+	cout << t.to_string() << endl;
+
+	initializer_list<thread *> threads = {
+			new thread("thread1", &t),
+			new thread("thread2", &t),
+			new thread("thread3", &t)
+	};
+	for (auto thr : threads) {
+		for (int i = 0; i < 3; i++) {
+			task_t task;
+			task.op = (operation_t)(random() % 3);
+			task.arg = random() % 25;
+			thr->add_task(task);
+		}
+	}
+
+	parbegin(to_vector(threads));
 
 	cout << t.to_string() << endl;
 

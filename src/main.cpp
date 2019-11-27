@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <util/timer.h>
 #include "io/file_reader.h"
 #include "model/rbtree.h"
 #include "model/thread_data.h"
@@ -119,7 +120,12 @@ int main() {
 
 	cout << tree.to_string() << endl;
 
+	timer t;
+	t.start();
 	thread::parbegin(threads);
+	t.stop();
+
+	cout << "Time: " << t.get_time_microseconds() << " us" << endl;
 
 	cout << tree.to_string() << endl;
 

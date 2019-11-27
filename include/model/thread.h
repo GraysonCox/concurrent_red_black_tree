@@ -6,47 +6,19 @@
 #define CONCURRENT_RED_BLACK_TREE_THREAD_H
 
 
-#include <string>
 #include <vector>
 #include <pthread.h>
-#include "rbtree.h"
-
-typedef enum {
-	SEARCH,
-	INSERT,
-	DELETE,
-	UNKNOWN
-} operation_t;
-
-std::string operation_to_string(operation_t op);
-
-operation_t operation_from_string(std::string op);
-
-typedef struct task {
-	operation_t op;
-	int arg;
-} task_t;
 
 class thread {
-private:
-	std::string name;
-	rbtree *tree;
-	std::vector<task_t> tasks;
 public:
-	thread(const std::string &name, rbtree *tree);
+	void *(*func)(void *);
 
-	const std::string &get_name() const;
+	void *data; // TODO: Maybe make this a template class.
 
-	rbtree *get_tree() const;
+	thread(void *(*func)(void *), void *data);
 
-	void add_task(task_t t);
-
-	const std::vector<task_t> &get_tasks() const;
+	static void parbegin(std::vector<thread *> threads);
 };
-
-void *start_thread(void *t);
-
-void parbegin(std::vector<thread *> threads);
 
 
 #endif //CONCURRENT_RED_BLACK_TREE_THREAD_H

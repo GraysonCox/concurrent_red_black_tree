@@ -20,6 +20,8 @@ typedef enum {
 
 std::string operation_to_string(operation_t op);
 
+operation_t operation_from_string(std::string op);
+
 typedef struct task {
 	operation_t op;
 	int arg;

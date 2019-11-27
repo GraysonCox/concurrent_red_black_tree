@@ -21,6 +21,16 @@ std::string operation_to_string(operation_t op) {
 	}
 }
 
+operation_t operation_from_string(std::string op) {
+	if (op == "search")
+		return SEARCH;
+	if (op == "insert")
+		return INSERT;
+	if (op == "delete")
+		return DELETE;
+	return UNKNOWN;
+}
+
 thread::thread(const std::string &name, rbtree *tree) : name(name), tree(tree) {}
 
 const std::string &thread::get_name() const {
@@ -40,7 +50,7 @@ rbtree *thread::get_tree() const {
 }
 
 void *start_thread(void *t) {
-	thread *thr = (thread *)t;
+	thread *thr = (thread *) t;
 	for (task_t task : thr->get_tasks()) {
 		printf("%s: %s(%d)\n", thr->get_name().c_str(), operation_to_string(task.op).c_str(), task.arg);
 //		cout << thr->get_name() << ": " << task.op << "(" << task.arg << ")" << endl;
@@ -54,7 +64,7 @@ void *start_thread(void *t) {
 			case DELETE:
 //				thr->get_tree()->delete_node(task.arg);
 				break;
-			default: ;
+			default:;
 				// TODO: Error handling
 		}
 	}

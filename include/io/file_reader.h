@@ -21,9 +21,13 @@ public:
 
 	std::string read_token();
 
+	std::string read_to(char delimiter);
+
 	bool is_open();
 
-	bool is_at_end();
+	bool is_end_of_file();
+
+	bool is_end_of_line();
 
 private:
 	std::ifstream input_file;

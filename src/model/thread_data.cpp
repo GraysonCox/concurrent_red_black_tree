@@ -28,5 +28,4 @@ operation_t operation_from_string(std::string op) {
 	return UNKNOWN;
 }
 
-thread_data::thread_data(std::string name, rbtree *tree, std::vector<task_t> *tasks) : name(name), tree(tree),
-																					   tasks(tasks) {}
+thread_data::thread_data(const std::string &name, std::vector<task_t> *tasks) : name(name), tasks(tasks) {}

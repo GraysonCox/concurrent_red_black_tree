@@ -3,8 +3,9 @@
 //
 
 #include <iostream>
-#include <sstream>
 #include <util/timer.h>
+#include <io/file_writer.h>
+#include <io/input_file_parsing.h>
 #include "io/file_reader.h"
 #include "model/rbtree.h"
 #include "model/thread_data.h"
@@ -13,91 +14,32 @@
 using namespace std;
 
 const string INPUT_FILE = "/Users/administrator/Documents/ISU/COMS352/PA2/Grayson_Cox_Project2/src/dong.txt";
+const string OUTPUT_FILE = "output.txt";
 
-template<typename T>
-vector<T> to_vector(initializer_list<T> list) {
-	vector<T> v;
-	for (auto t : list) {
-		v.push_back(t);
-	}
-	return v;
-}
+file_reader *reader;
+file_writer *writer;
 
-rbtree parse_tree(file_reader *reader) { // TODO: This isn't good modularity.
-	vector<rbnode *> nodes;
-	string str = reader->read_line();
-	str.push_back(',');
-	stringstream stream(str);
-	string token;
-	int key;
-	char color_code;
-	while (std::getline(stream, token, ',')) {
-		if (token == "f") {
-			nodes.push_back(nullptr);
-		} else {
-			stringstream ss(token);
-			ss >> key;
-			ss >> color_code;
-			if (color_code == 'r')
-				nodes.push_back(new rbnode(key, RED));
-			else
-				nodes.push_back(new rbnode(key, BLACK));
-		}
-	}
-	return rbtree(nodes);
-}
-
-vector<thread_data *> parse_threads(file_reader *reader, rbtree *t) {
-	vector<thread_data *> threads;
-	string name = reader->read_line();
-	name = reader->read_line();
-	while (name != "") {
-		threads.push_back(new thread_data(name, t, new vector<task_t>()));
-		name = reader->read_line();
-	}
-	return threads;
-}
-
-void parse_tasks(file_reader *reader, vector<thread_data *> *threads) {
-	string thread_name;
-	string op;
-	string arg;
-	while (!reader->is_end_of_file()) {
-		thread_name = reader->read_token();
-		thread_name.pop_back(); // Remove comma
-		op = reader->read_to('(');
-		arg = reader->read_to(')');
-
-		task_t task;
-		task.op = operation_from_string(op);
-		task.arg = atoi(arg.c_str());
-		for (thread_data *t : *threads) {
-			if (t->name == thread_name) {
-				t->tasks->push_back(task);
-				break;
-			}
-		}
-
-		if (!reader->is_end_of_file()) {
-			reader->read_token();
-		}
-	}
-}
+rbtree *red_black_tree;
 
 void *thread_func(void *data) {
 	thread_data *thr_data = (thread_data *) data;
+	bool search_result;
 	for (task_t task : *thr_data->tasks) {
 		printf("%s: %s(%d)\n", thr_data->name.c_str(), operation_to_string(task.op).c_str(), task.arg);
 		switch (task.op) {
 			case SEARCH:
-				thr_data->tree->search(task.arg);
-				// TODO: Output result.
+				search_result = red_black_tree->search(task.arg);
+				writer->write_line(
+						thr_data->name + ", "
+						+ operation_to_string(task.op) + "(" + to_string(task.arg) + ")"
+						+ " -> " + (search_result ? "true" : "false")
+				);
 				break;
 			case INSERT:
-				thr_data->tree->insert_node(task.arg);
+				red_black_tree->insert_node(task.arg);
 				break;
 			case DELETE:
-				thr_data->tree->delete_node(task.arg);
+				red_black_tree->delete_node(task.arg);
 				break;
 			default:;
 				// TODO: Error handling
@@ -107,27 +49,29 @@ void *thread_func(void *data) {
 }
 
 int main() {
-	file_reader reader(INPUT_FILE);
+	reader = new file_reader(INPUT_FILE);
+	writer = new file_writer(OUTPUT_FILE);
 
-	rbtree tree = parse_tree(&reader);
-	vector<thread_data *> thread_data_objects = parse_threads(&reader, &tree); // TODO: Rename all these functions.
-	parse_tasks(&reader, &thread_data_objects);
+	red_black_tree = parse_tree(reader);
+	vector<thread_data *> thread_data_objects = parse_thread_names(reader);
+	parse_tasks(reader, &thread_data_objects);
 
 	vector<thread *> threads;
 	for (thread_data *data : thread_data_objects) {
 		threads.push_back(new thread(thread_func, data));
 	}
 
-	cout << tree.to_string() << endl;
+	cout << red_black_tree->to_string() << endl;
 
 	timer t;
 	t.start();
 	thread::parbegin(threads);
 	t.stop();
 
-	cout << "Time: " << t.get_time_microseconds() << " us" << endl;
+	cout << red_black_tree->to_string() << endl;
 
-	cout << tree.to_string() << endl;
+	writer->write_line("Execution time: " + to_string(t.get_time_microseconds()) + " us");
+	writer->write_line(red_black_tree->to_string());
 
 	return 0;
 }

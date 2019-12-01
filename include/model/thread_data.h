@@ -28,10 +28,9 @@ typedef struct task {
 class thread_data {
 public:
 	std::string name;
-	rbtree *tree;
 	std::vector<task_t> *tasks;
 
-	thread_data(std::string name, rbtree *tree, std::vector<task_t> *tasks);
+	thread_data(const std::string &name, std::vector<task_t> *tasks);
 };
 
 

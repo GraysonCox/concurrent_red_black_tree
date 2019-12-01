@@ -12,7 +12,7 @@
 
 using namespace std;
 
-const string INPUT_FILE = "/Users/administrator/Documents/ISU/COMS352/PA2/Grayson_Cox_Project2/src/input.txt";
+const string INPUT_FILE = "/Users/administrator/Documents/ISU/COMS352/PA2/Grayson_Cox_Project2/src/dong.txt";
 
 template<typename T>
 vector<T> to_vector(initializer_list<T> list) {
@@ -90,14 +90,14 @@ void *thread_func(void *data) {
 		printf("%s: %s(%d)\n", thr_data->name.c_str(), operation_to_string(task.op).c_str(), task.arg);
 		switch (task.op) {
 			case SEARCH:
-//				thr->get_tree()->search(task.arg);
+				thr_data->tree->search(task.arg);
 				// TODO: Output result.
 				break;
 			case INSERT:
-//				thr->get_tree()->insert_node(task.arg);
+				thr_data->tree->insert_node(task.arg);
 				break;
 			case DELETE:
-//				thr->get_tree()->delete_node(task.arg);
+				thr_data->tree->delete_node(task.arg);
 				break;
 			default:;
 				// TODO: Error handling

@@ -30,10 +30,15 @@ public:
 
 	void set_right(rbnode *n);
 
+	rbnode *get_parent() const;
+
+	void set_parent(rbnode *n);
+
 private:
 	int key;
 	rbnode *left;
 	rbnode *right;
+	rbnode *parent;
 	rbnode_color color;
 	// TODO: Add mutex attribute and methods
 };

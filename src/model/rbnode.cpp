@@ -7,6 +7,7 @@
 rbnode::rbnode(int key, rbnode_color color) : key(key), color(color) {
 	left = nullptr;
 	right = nullptr;
+	parent = nullptr;
 }
 
 int rbnode::get_key() const {
@@ -39,4 +40,12 @@ rbnode *rbnode::get_right() const {
 
 void rbnode::set_right(rbnode *n) {
 	rbnode::right = n;
+}
+
+rbnode *rbnode::get_parent() const {
+	return parent;
+}
+
+void rbnode::set_parent(rbnode *n) {
+	rbnode::parent = n;
 }

@@ -24,8 +24,15 @@ public:
 
 	std::string to_string();
 
+	rbnode *get_root() const;
+
+	void set_root(rbnode *root);
+
+	rbnode *get_nil() const;
+
 private:
 	rbnode *root;
+	rbnode *nil;
 };
 
 #endif //RBTREE_H

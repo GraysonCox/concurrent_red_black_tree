@@ -5,6 +5,8 @@
 #ifndef RBNODE_H
 #define RBNODE_H
 
+#include <pthread.h>
+
 enum rbnode_color {
 	RED,
 	BLACK
@@ -13,6 +15,10 @@ enum rbnode_color {
 class rbnode {
 public:
 	rbnode(int key, rbnode_color color);
+
+	rbnode();
+
+	virtual ~rbnode();
 
 	int get_key() const;
 
@@ -34,6 +40,12 @@ public:
 
 	void set_parent(rbnode *n);
 
+	void lock();
+
+	void unlock();
+
+	bool is_nil();
+
 private:
 	int key;
 	rbnode *left;
@@ -41,6 +53,9 @@ private:
 	rbnode *parent;
 	rbnode_color color;
 	// TODO: Add mutex attribute and methods
+	pthread_mutex_t m;
+	bool is_mutex_locked;
+	bool is_nil_node;
 };
 
 #endif //RBNODE_H

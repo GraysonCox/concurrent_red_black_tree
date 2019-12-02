@@ -44,6 +44,7 @@ void *thread_func(void *data) {
 			default:;
 				// TODO: Error handling
 		}
+		printf("%s: Done\n%s\n", thr_data->name.c_str(), red_black_tree->to_string().c_str());
 	}
 	return nullptr;
 }

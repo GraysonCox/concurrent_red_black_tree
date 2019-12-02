@@ -31,6 +31,7 @@ public:
 	rbnode *get_nil() const;
 
 private:
+	rbnode *parent_of_root;
 	rbnode *root;
 	rbnode *nil;
 };

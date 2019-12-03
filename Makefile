@@ -1,4 +1,4 @@
-TARGET = concurrent_rb_tree
+TARGET = concurrent_red_black_tree
 
 SRCS  = $(shell find ./src     -type f -name *.cpp)
 HEADS = $(shell find ./include -type f -name *.h)
@@ -6,8 +6,8 @@ OBJS = $(SRCS:.cpp=.o)
 DEPS = Makefile.depend
 
 INCLUDES = -I./include
-CXXFLAGS = -std=c++11 -O2 -Wall $(INCLUDES)
-LDFLAGS = -lm
+CXXFLAGS = -std=c++11 -Werror -Wall $(INCLUDES)
+LDFLAGS = -lpthread
 
 
 all: $(TARGET)

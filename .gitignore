@@ -3,3 +3,4 @@ CMakeLists.txt
 cmake-build-debug/
 .DS_Store
 *.txt
+!sample_input.txt

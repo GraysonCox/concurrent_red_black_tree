@@ -25,7 +25,7 @@ void *thread_func(void *data) {
 	thread_data *thr_data = (thread_data *) data;
 	bool search_result;
 	for (task_t task : *thr_data->tasks) {
-		printf("%s: %s(%d)\n", thr_data->name.c_str(), operation_to_string(task.op).c_str(), task.arg);
+		printf("%s (%d): %s(%d)\n", thr_data->name.c_str(), pthread_self(), operation_to_string(task.op).c_str(), task.arg);
 		switch (task.op) {
 			case SEARCH:
 				search_result = red_black_tree->search(task.arg);
@@ -34,12 +34,15 @@ void *thread_func(void *data) {
 						+ operation_to_string(task.op) + "(" + to_string(task.arg) + ")"
 						+ " -> " + (search_result ? "true" : "false")
 				);
+				printf("%s: Done -> %s\n", thr_data->name.c_str(), search_result ? "true" : "false");
 				break;
 			case INSERT:
 				red_black_tree->insert_node(task.arg);
+				printf("%s: Done\n", thr_data->name.c_str());
 				break;
 			case DELETE:
 				red_black_tree->delete_node(task.arg);
+				printf("%s: Done\n", thr_data->name.c_str());
 				break;
 			default:;
 				// TODO: Error handling

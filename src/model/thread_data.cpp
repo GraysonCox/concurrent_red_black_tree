@@ -28,4 +28,16 @@ operation_t operation_from_string(std::string op) {
 	return UNKNOWN;
 }
 
-thread_data::thread_data(const std::string &name, std::vector<task_t> *tasks) : name(name), tasks(tasks) {}
+std::string task_to_string(task_t task) {
+	return operation_to_string(task.op) + "(" + std::to_string(task.arg) + ")";
+}
+
+task_t task_from_string(std::string task) {
+	task_t t;
+	int index_of_left_parenthesis = task.find('(', 0);
+	t.op = operation_from_string(task.substr(0, index_of_left_parenthesis));
+	t.arg = stoi(task.substr(index_of_left_parenthesis + 1, task.length() - 1));
+	return t;
+}
+
+thread_data::thread_data(std::string name, std::vector<task_t> *tasks) : name(name), tasks(tasks) {}

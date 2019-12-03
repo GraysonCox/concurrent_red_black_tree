@@ -6,26 +6,24 @@
 #include <cerrno>
 #include "model/rbnode.h"
 
-rbnode::rbnode(int key, rbnode_color color) : key(key), color(color) {
-	left = nullptr;
-	right = nullptr;
-	parent = nullptr;
-	is_mutex_locked = false;
-	is_nil_node = false;
+rbnode::rbnode(int key, rbnode_color color) : key(key),
+											  color(color),
+											  left(nullptr),
+											  right(nullptr),
+											  parent(nullptr),
+											  is_nil_node(false) {
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 	pthread_mutex_init(&m, &attr);
 }
 
-rbnode::rbnode() {
-	key = -1;
-	color = BLACK;
-	left = nullptr;
-	right = nullptr;
-	parent = nullptr;
-	is_mutex_locked = false;
-	is_nil_node = true;
+rbnode::rbnode() : key(-1),
+				   color(BLACK),
+				   left(nullptr),
+				   right(nullptr),
+				   parent(nullptr),
+				   is_nil_node(true) {
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
@@ -34,6 +32,22 @@ rbnode::rbnode() {
 
 rbnode::~rbnode() {
 	pthread_mutex_destroy(&m);
+}
+
+void rbnode::lock() {
+//	printf("%d: Locking node %d\n", pthread_self(), key); // TODO: Remove when done debugging
+	int error = pthread_mutex_lock(&m);
+	if (error != 0) {
+		// TODO: Error handling
+	}
+}
+
+void rbnode::unlock() {
+//	printf("%d: Unlocking node %d\n", pthread_self(), key); // TODO: Remove when done debugging
+	int error = pthread_mutex_unlock(&m);
+	if (error != 0) {
+		// TODO: Error handling
+	}
 }
 
 int rbnode::get_key() const {
@@ -74,24 +88,6 @@ rbnode *rbnode::get_parent() const {
 
 void rbnode::set_parent(rbnode *n) {
 	rbnode::parent = n;
-}
-
-void rbnode::lock() {
-	printf("%d: Locking node %d\n", pthread_self(), key); // TODO: Remove when done debugging
-	int error = pthread_mutex_lock(&m);
-	if (error != 0) {
-		// TODO: Error handling
-	}
-	is_mutex_locked = true;
-}
-
-void rbnode::unlock() {
-	printf("%d: Unlocking node %d\n", pthread_self(), key); // TODO: Remove when done debugging
-	is_mutex_locked = false;
-	int error = pthread_mutex_unlock(&m);
-	if (error != 0) {
-		// TODO: Error handling
-	}
 }
 
 bool rbnode::is_nil() {

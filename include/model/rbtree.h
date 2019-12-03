@@ -67,7 +67,7 @@ private:
 
 	rbnode *root;
 
-	rbnode *build_from_preorder(std::vector<rbnode *> preorder, int *next_index);
+	rbnode *build_from_preorder(std::vector<rbnode *> preorder, std::vector<rbnode *>::size_type *next_index);
 
 	void insert_fixup(rbnode *z);
 

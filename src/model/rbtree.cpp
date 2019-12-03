@@ -13,7 +13,7 @@ rbtree::rbtree() {
 }
 
 rbtree::rbtree(vector<rbnode *> preorder) {
-	int index = 0;
+	vector<rbnode *>::size_type index = 0;
 	root = build_from_preorder(preorder, &index);
 	parent_of_root = new rbnode();
 	root->set_parent(parent_of_root);
@@ -183,7 +183,7 @@ std::string rbtree::to_string() {
  * @param next_index - The index of the next entry in preorder.
  * @return An rbtree with the contents of the given pre-order traversal.
  */
-rbnode *rbtree::build_from_preorder(vector<rbnode *> preorder, int *next_index) {
+rbnode *rbtree::build_from_preorder(vector<rbnode *> preorder, vector<rbnode *>::size_type *next_index) {
 	if (*next_index >= preorder.size())
 		return new rbnode();
 	rbnode *n = preorder.at((*next_index)++);

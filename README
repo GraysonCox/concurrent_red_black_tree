@@ -1,0 +1,13 @@
+To compile:
+
+	Run 'make' in the directory containing Makefile.
+
+To run:
+
+	With specified input file:
+
+		./concurrent_red_black_tree FILE
+
+	With sample input file:
+
+		./concurrent_red_black_tree

@@ -21,22 +21,22 @@ rbtree::rbtree(vector<rbnode *> preorder) {
 
 bool rbtree::search(int key) {
 	rbnode *x = parent_of_root;
-	x->lock();
+	x->read_lock();
 	rbnode *y = root;
-	y->lock();
+	y->read_lock();
 	while (!y->is_nil() && y->get_key() != key) {
-		x->unlock();
+		x->read_unlock();
 		x = y;
 		if (key < y->get_key()) {
 			y = y->get_left();
 		} else {
 			y = y->get_right();
 		}
-		y->lock();
+		y->read_lock();
 	}
 	bool is_found = y->get_key() == key;
-	x->unlock();
-	y->unlock();
+	x->read_unlock();
+	y->read_unlock();
 	return is_found;
 }
 
@@ -46,10 +46,10 @@ void rbtree::insert_node(int key) {
 	z->set_right(new rbnode());
 	queue<rbnode *> locked_nodes;
 	rbnode *y = parent_of_root;
-	y->lock();
+	y->write_lock();
 	locked_nodes.push(y);
 	rbnode *x = root;
-	x->lock();
+	x->write_lock();
 	while (!x->is_nil()) {
 		locked_nodes.push(x);
 		y = x;
@@ -58,18 +58,18 @@ void rbtree::insert_node(int key) {
 		} else {
 			x = x->get_right();
 		}
-		x->lock();
+		x->write_lock();
 		if (y->get_color() == BLACK && x->get_color() == BLACK) {
 			// If two consecutive nodes in the path are black, all preceding nodes can be unlocked.
 			while (locked_nodes.front() != y) {
-				locked_nodes.front()->unlock();
+				locked_nodes.front()->write_unlock();
 				locked_nodes.pop();
 			}
 		}
 	}
-	x->unlock();
+	x->write_unlock();
 	delete x;
-	z->lock();
+	z->write_lock();
 	locked_nodes.push(z);
 	z->set_parent(y);
 	if (y->is_nil()) {
@@ -84,7 +84,7 @@ void rbtree::insert_node(int key) {
 		root->set_color(BLACK);
 	}
 	while (!locked_nodes.empty()) {
-		locked_nodes.front()->unlock();
+		locked_nodes.front()->write_unlock();
 		locked_nodes.pop();
 	}
 }
@@ -92,10 +92,10 @@ void rbtree::insert_node(int key) {
 void rbtree::delete_node(int key) {
 	queue<rbnode *> locked_nodes;
 	rbnode *z = parent_of_root;
-	z->lock();
+	z->write_lock();
 	locked_nodes.push(z);
 	z = root;
-	z->lock();
+	z->write_lock();
 	locked_nodes.push(z);
 	while (!z->is_nil() && z->get_key() != key) {
 		if (key < z->get_key()) {
@@ -103,20 +103,20 @@ void rbtree::delete_node(int key) {
 		} else {
 			z = z->get_right();
 		}
-		z->lock();
+		z->write_lock();
 		locked_nodes.push(z);
 		// TODO: Is this the tightest bound required for restructuring?
 		if (z->get_parent()->get_color() == RED && z->get_color() == RED) {
 			// If two consecutive nodes in the path are red, all preceding nodes can be unlocked, I think.
 			while (locked_nodes.front() != z->get_parent()) {
-				locked_nodes.front()->unlock();
+				locked_nodes.front()->write_unlock();
 				locked_nodes.pop();
 			}
 		}
 	}
 	if (z->is_nil()) { // If key is not found, unlock all nodes and return.
 		while (!locked_nodes.empty()) {
-			locked_nodes.front()->unlock();
+			locked_nodes.front()->write_unlock();
 			locked_nodes.pop();
 		}
 		return;
@@ -126,27 +126,27 @@ void rbtree::delete_node(int key) {
 	rbnode_color y_original_color = y->get_color();
 	if (z->get_left()->is_nil()) {
 		x = z->get_right();
-		x->lock();
+		x->write_lock();
 		locked_nodes.push(x);
 		transplant(z, z->get_right());
 	} else if (z->get_right()->is_nil()) {
 		x = z->get_left(); // TODO: Maybe delete z->get_right().
-		x->lock();
+		x->write_lock();
 		locked_nodes.push(x);
 		transplant(z, z->get_left());
 	} else {
-		z->get_right()->lock();
+		z->get_right()->write_lock();
 		locked_nodes.push(z->get_right());
 		y = z->get_right(); // Find min node in subtree at z->get_right().
 		while (!z->get_right()->is_nil() && !y->get_left()->is_nil()) {
 			y = y->get_left();
-			y->lock();
+			y->write_lock();
 			locked_nodes.push(y);
 		}
 		delete y->get_left(); // Delete the nil node.
 		y_original_color = y->get_color();
 		x = y->get_right();
-		x->lock();
+		x->write_lock();
 		locked_nodes.push(x);
 		if (y->get_parent() == z) {
 			x->set_parent(y);
@@ -156,7 +156,7 @@ void rbtree::delete_node(int key) {
 			y->get_right()->set_parent(y);
 		}
 		transplant(z, y);
-		z->get_left()->lock();
+		z->get_left()->write_lock();
 		locked_nodes.push(z->get_left());
 		y->set_left(z->get_left());
 		y->get_left()->set_parent(y);
@@ -166,7 +166,7 @@ void rbtree::delete_node(int key) {
 		delete_fixup(x);
 	}
 	while (!locked_nodes.empty()) { // Unlock all nodes.
-		locked_nodes.front()->unlock();
+		locked_nodes.front()->write_unlock();
 		locked_nodes.pop(); // TODO: De-allocate z.
 	}
 }
@@ -207,15 +207,15 @@ void rbtree::insert_fixup(rbnode *z) {
 		if (z->get_parent() ==
 			z->get_parent()->get_parent()->get_left()) { // z's parent is left child. TODO: Is it okay not to lock z's uncle?
 			y = z->get_parent()->get_parent()->get_right();
-			y->lock();
+			y->write_lock();
 			if (y->get_color() == RED) {
 				z->get_parent()->set_color(BLACK);
 				y->set_color(BLACK);
 				z->get_parent()->get_parent()->set_color(RED);
 				z = z->get_parent()->get_parent();
-				y->unlock();
+				y->write_unlock();
 			} else {
-				y->unlock();
+				y->write_unlock();
 				if (z == z->get_parent()->get_right()) { // z is right child.
 					z = z->get_parent();
 					rotate_counter_clockwise(z);
@@ -226,15 +226,15 @@ void rbtree::insert_fixup(rbnode *z) {
 			}
 		} else { // Same as previous clause, but with 'right' and 'left' exchanged.
 			y = z->get_parent()->get_parent()->get_left();
-			y->lock();
+			y->write_lock();
 			if (y->get_color() == RED) {
 				z->get_parent()->set_color(BLACK);
 				y->set_color(BLACK);
 				z->get_parent()->get_parent()->set_color(RED);
 				z = z->get_parent()->get_parent();
-				y->unlock();
+				y->write_unlock();
 			} else {
-				y->unlock();
+				y->write_unlock();
 				if (z == z->get_parent()->get_left()) {
 					z = z->get_parent();
 					rotate_clockwise(z);
@@ -258,84 +258,84 @@ void rbtree::delete_fixup(rbnode *x) {
 	while (x->get_parent() != parent_of_root && x->get_color() == BLACK) {
 		if (x == x->get_parent()->get_left()) {
 			w = x->get_parent()->get_right();
-			w->lock();
+			w->write_lock();
 			if (w->get_color() == RED) {
 				w->set_color(BLACK);
 				x->get_parent()->set_color(RED);
 				rotate_counter_clockwise(x->get_parent());
-				w->unlock();
+				w->write_unlock();
 				w = x->get_parent()->get_right();
-				w->lock();
+				w->write_lock();
 			}
-			w->get_left()->lock();
-			w->get_right()->lock();
+			w->get_left()->write_lock();
+			w->get_right()->write_lock();
 			if (w->get_left()->get_color() == BLACK && w->get_right()->get_color() == BLACK) {
 				w->set_color(RED);
 				x = x->get_parent();
-				w->get_left()->unlock();
-				w->get_right()->unlock();
-				w->unlock();
+				w->get_left()->write_unlock();
+				w->get_right()->write_unlock();
+				w->write_unlock();
 			} else {
 				if (w->get_right()->get_color() == BLACK) {
 					w->get_left()->set_color(BLACK);
 					w->set_color(RED);
 					rotate_clockwise(w);
-					w->get_left()->unlock();
-					w->get_right()->unlock();
-					w->unlock();
+					w->get_left()->write_unlock();
+					w->get_right()->write_unlock();
+					w->write_unlock();
 					w = x->get_parent()->get_right();
-					w->lock();
-					w->get_left()->lock();
-					w->get_right()->lock();
+					w->write_lock();
+					w->get_left()->write_lock();
+					w->get_right()->write_lock();
 				}
 				w->set_color(x->get_parent()->get_color());
 				x->get_parent()->set_color(BLACK);
 				w->get_right()->set_color(BLACK);
-				w->get_left()->unlock();
+				w->get_left()->write_unlock();
 				rotate_counter_clockwise(x->get_parent());
-				w->get_right()->unlock();
-				w->unlock();
+				w->get_right()->write_unlock();
+				w->write_unlock();
 				return;
 			}
 		} else { // Same as previous clause, but with 'right' and 'left' exchanged
 			w = x->get_parent()->get_left();
-			w->lock();
+			w->write_lock();
 			if (w->get_color() == RED) {
 				w->set_color(BLACK);
 				x->get_parent()->set_color(RED);
 				rotate_clockwise(x->get_parent());
-				w->unlock();
+				w->write_unlock();
 				w = x->get_parent()->get_left();
-				w->lock();
+				w->write_lock();
 			}
-			w->get_left()->lock();
-			w->get_right()->lock();
+			w->get_left()->write_lock();
+			w->get_right()->write_lock();
 			if (w->get_left()->get_color() == BLACK && w->get_right()->get_color() == BLACK) {
 				w->set_color(RED);
 				x = x->get_parent();
-				w->get_left()->unlock();
-				w->get_right()->unlock();
-				w->unlock();
+				w->get_left()->write_unlock();
+				w->get_right()->write_unlock();
+				w->write_unlock();
 			} else {
 				if (w->get_left()->get_color() == BLACK) {
 					w->get_right()->set_color(BLACK);
 					w->set_color(RED);
 					rotate_counter_clockwise(w);
-					w->get_left()->unlock();
-					w->get_right()->unlock();
-					w->unlock();
+					w->get_left()->write_unlock();
+					w->get_right()->write_unlock();
+					w->write_unlock();
 					w = x->get_parent()->get_left();
-					w->lock();
-					w->get_left()->lock();
-					w->get_right()->lock();
+					w->write_lock();
+					w->get_left()->write_lock();
+					w->get_right()->write_lock();
 				}
 				w->set_color(x->get_parent()->get_color());
 				x->get_parent()->set_color(BLACK);
 				w->get_left()->set_color(BLACK);
-				w->get_right()->unlock();
+				w->get_right()->write_unlock();
 				rotate_clockwise(x->get_parent());
-				w->get_left()->unlock();
-				w->unlock();
+				w->get_left()->write_unlock();
+				w->write_unlock();
 				return;
 			}
 		}
@@ -350,12 +350,12 @@ void rbtree::delete_fixup(rbnode *x) {
  */
 void rbtree::rotate_clockwise(rbnode *x) {
 	rbnode *y = x->get_left();
-	y->get_right()->lock();
+	y->get_right()->write_lock();
 	x->set_left(y->get_right());
 	if (!y->get_right()->is_nil()) {
 		y->get_right()->set_parent(x);
 	}
-	y->get_right()->unlock();
+	y->get_right()->write_unlock();
 	y->set_parent(x->get_parent());
 	if (x->get_parent()->is_nil()) {
 		root = y;
@@ -375,12 +375,12 @@ void rbtree::rotate_clockwise(rbnode *x) {
  */
 void rbtree::rotate_counter_clockwise(rbnode *x) {
 	rbnode *y = x->get_right();
-	y->get_left()->lock();
+	y->get_left()->write_lock();
 	x->set_right(y->get_left());
 	if (!y->get_left()->is_nil()) {
 		y->get_left()->set_parent(x);
 	}
-	y->get_left()->unlock();
+	y->get_left()->write_unlock();
 	y->set_parent(x->get_parent());
 	if (x->get_parent()->is_nil()) {
 		root = y;

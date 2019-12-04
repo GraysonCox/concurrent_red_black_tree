@@ -47,19 +47,27 @@ public:
 	virtual ~rbnode();
 
 	/**
-	 * Acquires a mutex lock on this rbnode. This implementation uses
-	 * a recursive mutex mechanism, so if a single thread locks the node
-	 * multiple times recursively, that thread will have to call rbnode.unlock()
-	 * the same number of times before another thread can acquire the lock.
+	 * Acquires a read lock on this rbnode. Multiple threads can have
+	 * a read lock on the same rbnode as long as no other threads have
+	 * a write lock on that rbnode.
 	 */
-	void lock();
+	void read_lock();
 
 	/**
-	 * Releases the mutex lock on this rbnode. If the calling thread has
-	 * multiple recursive locks on this node, the thread will have to call this
-	 * method the same number of times before another thread can acquire the lock.
+	 * Releases the read lock on this rbnode.
 	 */
-	void unlock();
+	void read_unlock();
+
+	/**
+	 * Acquires a write lock on this rbnode. The lock is acquired when
+	 * no other thread has a read lock or write lock on this rbnode.
+	 */
+	void write_lock();
+
+	/**
+	 * Releases the write lock on this rbnode.
+	 */
+	void write_unlock();
 
 	/**
 	 * Returns the integer key associated with this rbnode.
@@ -150,9 +158,17 @@ private:
 
 	rbnode *parent;
 
+	bool is_nil_node;
+
 	pthread_mutex_t m;
 
-	bool is_nil_node;
+	pthread_cond_t can_read, can_write;
+
+	int num_readers, num_readers_waiting;
+
+	bool is_busy;
+
+	pthread_t write_owner;
 };
 
 #endif //RBNODE_H

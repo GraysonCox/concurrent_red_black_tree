@@ -2,7 +2,7 @@
 // Created by Grayson Cox on 11/20/19.
 //
 
-#include <cstdio>
+#include <cstdio> // TODO: Remove when done debugging.
 #include <cerrno>
 #include "model/rbnode.h"
 
@@ -16,6 +16,11 @@ rbnode::rbnode(int key, rbnode_color color) : key(key),
 	pthread_mutexattr_init(&attr);
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 	pthread_mutex_init(&m, &attr);
+	pthread_cond_init(&can_read, nullptr);
+	pthread_cond_init(&can_write, nullptr);
+	num_readers = 0;
+	num_readers_waiting = 0;
+	is_busy = false;
 }
 
 rbnode::rbnode() : key(-1),
@@ -28,26 +33,62 @@ rbnode::rbnode() : key(-1),
 	pthread_mutexattr_init(&attr);
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 	pthread_mutex_init(&m, &attr);
+	pthread_cond_init(&can_read, nullptr);
+	pthread_cond_init(&can_write, nullptr);
+	num_readers = 0;
+	num_readers_waiting = 0;
+	is_busy = false;
 }
 
 rbnode::~rbnode() {
 	pthread_mutex_destroy(&m);
 }
 
-void rbnode::lock() {
-//	printf("%d: Locking node %d\n", pthread_self(), key); // TODO: Remove when done debugging
-	int error = pthread_mutex_lock(&m);
-	if (error != 0) {
-		// TODO: Error handling
-	}
+void rbnode::read_lock() {
+	pthread_mutex_lock(&m);
+	num_readers_waiting++;
+	while (is_busy)
+		pthread_cond_wait(&can_read, &m);
+	num_readers_waiting--;
+	num_readers++;
+	pthread_cond_signal(&can_read);
+	pthread_mutex_unlock(&m);
 }
 
-void rbnode::unlock() {
-//	printf("%d: Unlocking node %d\n", pthread_self(), key); // TODO: Remove when done debugging
-	int error = pthread_mutex_unlock(&m);
-	if (error != 0) {
-		// TODO: Error handling
+void rbnode::read_unlock() {
+	pthread_mutex_lock(&m);
+	num_readers--;
+	if (num_readers == 0)
+		pthread_cond_signal(&can_write);
+	pthread_mutex_unlock(&m);
+}
+
+void rbnode::write_lock() {
+	pthread_mutex_lock(&m);
+	pthread_t self = pthread_self();
+//	printf("%d: Locking node %d\n", self, key); // TODO: Remove when done debugging
+	if (self != write_owner) { // This is my fix for recursive calls to write_lock().
+		while (is_busy || num_readers != 0)
+			pthread_cond_wait(&can_write, &m);
+		is_busy = true;
+		write_owner = self;
 	}
+	pthread_mutex_unlock(&m);
+}
+
+void rbnode::write_unlock() {
+	pthread_mutex_lock(&m);
+	pthread_t self = pthread_self();
+//	printf("%d: Unlocking node %d\n", self, key); // TODO: Remove when done debugging
+	if (self == write_owner) { // This is my fix for recursive calls to write_lock().
+		is_busy = false;
+		if (num_readers_waiting > 0)
+			pthread_cond_signal(&can_read);
+		else
+			pthread_cond_signal(&can_write);
+		write_owner = nullptr;
+	}
+	pthread_mutex_unlock(&m);
 }
 
 int rbnode::get_key() const {

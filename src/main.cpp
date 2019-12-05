@@ -3,13 +3,15 @@
 //
 
 #include <iostream>
-#include <unistd.h>
+#include <queue>
 #include "io/file_reader.h"
 #include "io/file_writer.h"
 #include "io/input_file_parsing.h"
 #include "model/rbtree.h"
 #include "model/thread.h"
-#include "model/thread_data.h"
+#include "model/operation.h"
+#include "model/operation_queue.h"
+#include "util/pthread_util.h"
 #include "util/timer.h"
 
 using namespace std;
@@ -17,39 +19,36 @@ using namespace std;
 const string SAMPLE_INPUT_FILE = "sample_input.txt";
 const string OUTPUT_FILE = "output.txt";
 
-file_reader *reader;
-file_writer *writer;
+file_reader *input_file_reader;
+file_writer *output_file_writer;
+
+operation_queue *read_tasks, *write_tasks;
 
 rbtree *red_black_tree;
 
 /**
- * This is the function that each thread runs.
+ * The function run by each read thread.
  *
- * @param data - A thread_data object that holds the thread's name
- * 				and list of tasks to perform on the red-black tree.
+ * @param name - An identifier for the thread. This is nicer than
+ * 				using just the hexadecimal pthread_t id.
  */
-void *thread_func(void *data) {
-	thread_data *thr_data = (thread_data *) data;
+void *reader_thread_func(void *name) {
+	string thread_name = *(string *) name;
+	string thread_id = get_thread_id_string();
+	operation *op;
 	bool search_result;
-	for (task_t task : *thr_data->tasks) {
-		printf("%s: %s\n", thr_data->name.c_str(), task_to_string(task).c_str());
-		switch (task.op) {
+	while ((op = read_tasks->dequeue()) != nullptr) {
+		printf("%s (%s): %s\n", thread_name.c_str(), thread_id.c_str(), op->to_string().c_str());
+		switch (op->op) {
 			case SEARCH:
-				search_result = red_black_tree->search(task.arg);
-				writer->write_line(
-						thr_data->name + ", "
-						+ task_to_string(task)
-						+ " -> " + (search_result ? "true" : "false") // TODO: Remove all magic strings.
+				search_result = red_black_tree->search(op->arg); // TODO: Remove all magic strings.
+				output_file_writer->write_line(
+						op->to_string()
+						+ " -> " + (search_result ? "true" : "false")
+						+ ", performed by thread: " + thread_id
 				);
-				printf("%s: Done -> %s\n", thr_data->name.c_str(), search_result ? "true" : "false");
-				break;
-			case INSERT:
-				red_black_tree->insert_node(task.arg);
-				printf("%s: Done\n", thr_data->name.c_str());
-				break;
-			case DELETE:
-				red_black_tree->delete_node(task.arg);
-				printf("%s: Done\n", thr_data->name.c_str());
+				printf("%s (%s): Done -> %s\n", thread_name.c_str(), thread_id.c_str(),
+					   search_result ? "true" : "false");
 				break;
 			default:;
 				// TODO: Error handling
@@ -58,29 +57,79 @@ void *thread_func(void *data) {
 	return nullptr;
 }
 
+/**
+ * The function run by each write thread.
+ *
+ * @param name - An identifier for the thread. This is nicer than
+ * 				just using the hexadecimal pthread_t id.
+ */
+void *writer_thread_func(void *name) {
+	string thread_name = *(string *) name;
+	string thread_id = get_thread_id_string();
+	operation *op;
+	while ((op = write_tasks->dequeue()) != nullptr) {
+		printf("%s (%s): %s\n", thread_name.c_str(), thread_id.c_str(), op->to_string().c_str());
+		switch (op->op) {
+			case INSERT:
+				red_black_tree->insert_node(op->arg);
+				break;
+			case DELETE:
+				red_black_tree->delete_node(op->arg);
+				break;
+			default:;
+				// TODO: Error handling
+		}
+		printf("%s (%s): Done\n", thread_name.c_str(), thread_id.c_str());
+	}
+	return nullptr;
+}
+
 int main(int argc, char **argv) {
+
+	// Set up file i/o
+	string file_name;
 	if (argc >= 2) {
-		reader = new file_reader(argv[1]);
+		file_name = argv[1];
 	} else {
 		cout << "No input file specified. Reading from " << SAMPLE_INPUT_FILE << "." << endl;
-		reader = new file_reader(SAMPLE_INPUT_FILE);
+		file_name = SAMPLE_INPUT_FILE;
 	}
-	writer = new file_writer(OUTPUT_FILE);
+	input_file_reader = new file_reader(file_name);
+	output_file_writer = new file_writer(OUTPUT_FILE);
 
-	red_black_tree = parse_tree(reader);
-	vector<thread_data *> thread_data_objects = parse_thread_names(reader);
-	parse_tasks(reader, &thread_data_objects);
+	// Parse and initialize red-black tree
+	red_black_tree = parse_tree(input_file_reader);
 
+	// Create threads
 	vector<thread *> threads;
-	for (thread_data *data : thread_data_objects) {
-		threads.push_back(new thread(thread_func, data));
+	string *thread_name;
+	int num_reader_threads = parse_num_threads(input_file_reader);
+	for (int i = 0; i < num_reader_threads; i++) {
+		thread_name = new string();
+		*thread_name = "reader_thread_" + to_string(i);
+		threads.push_back(new thread(reader_thread_func, thread_name));
+	}
+	int num_writer_threads = parse_num_threads(input_file_reader);
+	for (int i = 0; i < num_writer_threads; i++) {
+		thread_name = new string();
+		*thread_name = "writer_thread_" + to_string(i);
+		threads.push_back(new thread(writer_thread_func, thread_name));
 	}
 
-	writer->write_line("Initial red-black tree:\n");
-	writer->write_line(red_black_tree->to_string());
+	// Parse tasks and store in respective queues
+	auto *tmp_read_tasks = new queue<operation>();
+	auto *tmp_write_tasks = new queue<operation>();
+	parse_tasks(input_file_reader, tmp_read_tasks, tmp_write_tasks);
+	read_tasks = new operation_queue(*tmp_read_tasks);
+	write_tasks = new operation_queue(*tmp_write_tasks);
+
+	// Write initial red-black tree to output file
+	output_file_writer->write_line("Initial red-black tree:\n");
+	output_file_writer->write_line(red_black_tree->to_string());
 
 	cout << red_black_tree->to_string() << endl;
 
+	// Execute the threads and record execution time
 	timer t;
 	t.start();
 	thread::parbegin(threads);
@@ -88,10 +137,12 @@ int main(int argc, char **argv) {
 
 	cout << red_black_tree->to_string() << endl;
 
-	writer->write_line("Execution time: " + to_string(t.get_time_microseconds()) + " us\n");
+	// Write execution time to output file
+	output_file_writer->write_line("Execution time: " + to_string(t.get_time_microseconds()) + " us\n");
 
-	writer->write_line("Final red-black tree:\n");
-	writer->write_line(red_black_tree->to_string());
+	// Write final red-black tree to output file
+	output_file_writer->write_line("Final red-black tree:\n");
+	output_file_writer->write_line(red_black_tree->to_string());
 
 	return 0;
 }

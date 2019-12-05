@@ -30,35 +30,31 @@ rbtree *parse_tree(file_reader *reader) {
 	return new rbtree(nodes);
 }
 
-vector<thread_data *> parse_thread_names(file_reader *reader) {
-	vector<thread_data *> threads;
-	string name = reader->read_line();
-	name = reader->read_line();
-	while (name != "") {
-		threads.push_back(new thread_data(name, new vector<task_t>()));
-		name = reader->read_line();
-	}
-	return threads;
+int parse_num_threads(file_reader *reader) {
+	reader->read_token();
+	reader->read_token();
+	string str = reader->read_token();
+	int num_threads = stoi(str);
+	// TODO: Error handling
+	return num_threads;
 }
 
-void parse_tasks(file_reader *reader, vector<thread_data *> *threads) {
-	string thread_name;
-	string op;
-	string arg;
+void parse_tasks(file_reader *reader, queue<operation> *read_tasks, queue<operation> *write_tasks) {
+	string str;
+	operation *task;
 	while (!reader->is_end_of_file()) {
-		thread_name = reader->read_token();
-		thread_name.pop_back(); // Remove comma
-		op = reader->read_to('(');
-		arg = reader->read_to(')');
+		str = reader->read_token();
+		task = new operation(str);
 
-		task_t task;
-		task.op = operation_from_string(op);
-		task.arg = atoi(arg.c_str());
-		for (thread_data *t : *threads) {
-			if (t->name == thread_name) {
-				t->tasks->push_back(task);
+		switch (task->op) {
+			case SEARCH:
+				read_tasks->push(*task);
 				break;
-			}
+			case INSERT:
+			case DELETE:
+				write_tasks->push(*task);
+				break;
+			default:; // TODO: Handle error.
 		}
 
 		if (!reader->is_end_of_file()) {

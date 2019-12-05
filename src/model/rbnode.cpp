@@ -11,7 +11,8 @@ rbnode::rbnode(int key, rbnode_color color) : key(key),
 											  left(nullptr),
 											  right(nullptr),
 											  parent(nullptr),
-											  is_nil_node(false) {
+											  is_nil_node(false),
+											  write_owner(0) {
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
@@ -28,7 +29,8 @@ rbnode::rbnode() : key(-1),
 				   left(nullptr),
 				   right(nullptr),
 				   parent(nullptr),
-				   is_nil_node(true) {
+				   is_nil_node(true),
+				   write_owner(0) {
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
@@ -67,7 +69,7 @@ void rbnode::write_lock() {
 	pthread_mutex_lock(&m);
 	pthread_t self = pthread_self();
 //	printf("%d: Locking node %d\n", self, key); // TODO: Remove when done debugging
-	if (self != write_owner) { // This is my fix for recursive calls to write_lock().
+	if (!pthread_equal(self, write_owner)) { // This is my fix for recursive calls to write_lock().
 		while (is_busy || num_readers != 0)
 			pthread_cond_wait(&can_write, &m);
 		is_busy = true;
@@ -80,13 +82,13 @@ void rbnode::write_unlock() {
 	pthread_mutex_lock(&m);
 	pthread_t self = pthread_self();
 //	printf("%d: Unlocking node %d\n", self, key); // TODO: Remove when done debugging
-	if (self == write_owner) { // This is my fix for recursive calls to write_lock().
+	if (pthread_equal(self, write_owner)) { // This is my fix for recursive calls to write_lock().
 		is_busy = false;
 		if (num_readers_waiting > 0)
 			pthread_cond_signal(&can_read);
 		else
 			pthread_cond_signal(&can_write);
-		write_owner = nullptr;
+		write_owner = 0;
 	}
 	pthread_mutex_unlock(&m);
 }

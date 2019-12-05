@@ -19,6 +19,22 @@ rbtree::rbtree(vector<rbnode *> *preorder) {
 	root->set_parent(parent_of_root);
 }
 
+rbtree::~rbtree() {
+	delete parent_of_root;
+	auto *nodes = new vector<rbnode *>();
+	nodes->push_back(root);
+	for (auto n : *nodes) {
+		if (n == nullptr)
+			continue;
+		if (n->get_left() != nullptr)
+			nodes->push_back(n->get_left());
+		if (n->get_right() != nullptr)
+			nodes->push_back(n->get_right());
+		delete n;
+	}
+	delete nodes;
+}
+
 bool rbtree::search(int key) {
 	rbnode *x = parent_of_root;
 	x->read_lock();

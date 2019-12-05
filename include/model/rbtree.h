@@ -30,6 +30,8 @@ public:
 	 */
 	explicit rbtree(std::vector<rbnode *> *preorder);
 
+	virtual ~rbtree();
+
 	/**
 	 * Synchronously searches for the given key in the tree.
 	 *

@@ -142,5 +142,17 @@ int main(int argc, char **argv) {
 	output_file_writer->write_line("Final red-black tree:\n");
 	output_file_writer->write_line("\t" + red_black_tree->to_string() + "\n");
 
+	delete input_file_reader;
+	delete output_file_writer;
+	for (auto thr : threads) {
+		delete (string *) thr->data;
+		delete thr;
+	}
+	delete red_black_tree; // TODO: Delete red_black_tree.
+	delete read_tasks;
+	delete write_tasks;
+	delete tmp_read_tasks;
+	delete tmp_write_tasks;
+
 	return 0;
 }

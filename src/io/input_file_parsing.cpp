@@ -27,7 +27,7 @@ rbtree *parse_tree(file_reader *reader) {
 				nodes.push_back(new rbnode(key, BLACK));
 		}
 	}
-	return new rbtree(nodes);
+	return new rbtree(&nodes);
 }
 
 int parse_num_threads(file_reader *reader) {

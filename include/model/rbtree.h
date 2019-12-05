@@ -28,7 +28,7 @@ public:
 	 * @param preorder - A vector of rbnode pointers in prefix order.
 	 * 		Every leaf node should be given as nullptr.
 	 */
-	explicit rbtree(std::vector<rbnode *> preorder);
+	explicit rbtree(std::vector<rbnode *> *preorder);
 
 	/**
 	 * Synchronously searches for the given key in the tree.
@@ -67,7 +67,7 @@ private:
 
 	rbnode *root;
 
-	rbnode *build_from_preorder(std::vector<rbnode *> preorder, std::vector<rbnode *>::size_type *next_index);
+	rbnode *build_from_preorder(std::vector<rbnode *> *preorder, std::vector<rbnode *>::size_type *next_index);
 
 	void insert_fixup(rbnode *z);
 

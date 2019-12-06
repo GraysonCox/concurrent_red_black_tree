@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
 	cout << red_black_tree->to_string() << endl;
 
 	// Write execution time to output file
-	output_file_writer->write_line("Execution time: " + to_string(t.get_time_microseconds()) + " us\n");
+	output_file_writer->write_line("Execution time: " + to_string(t.get_time_microseconds()) + " μs\n");
 
 	// Write final red-black tree to output file
 	output_file_writer->write_line("Final red-black tree:\n");

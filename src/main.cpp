@@ -53,7 +53,7 @@ void *reader_thread_func(void *name) {
 				printf("%s (%s): Done -> %s\n", thread_name.c_str(), thread_id.c_str(), search_result_string.c_str());
 				break;
 			default:;
-				// TODO: Error handling
+				// Ignore
 		}
 	}
 	return nullptr;
@@ -79,7 +79,7 @@ void *writer_thread_func(void *name) {
 				red_black_tree->delete_node(op->arg);
 				break;
 			default:;
-				// TODO: Error handling
+				// Ignore
 		}
 		printf("%sDone\n", thread_name_tag.c_str());
 	}
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
 	// Parse tasks and store in respective queues
 	auto *tmp_read_tasks = new queue<operation>();
 	auto *tmp_write_tasks = new queue<operation>();
-	parse_tasks(input_file_reader, tmp_read_tasks, tmp_write_tasks); // TODO: Parse tasks over multiple lines.
+	parse_tasks(input_file_reader, tmp_read_tasks, tmp_write_tasks);
 	read_tasks = new operation_queue(*tmp_read_tasks);
 	write_tasks = new operation_queue(*tmp_write_tasks);
 

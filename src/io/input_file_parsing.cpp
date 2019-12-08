@@ -43,7 +43,7 @@ void parse_tasks(file_reader *reader, queue<operation> *read_tasks, queue<operat
 	operation *task;
 	while (!reader->is_end_of_file()) {
 		str = reader->read_token();
-		if (str == "||")
+		if (str == "||" || str == "")
 			continue;
 
 		task = new operation(str);

@@ -174,7 +174,11 @@ void rbtree::delete_node(int key) {
 }
 
 std::string rbtree::to_string() {
-	return to_string_rec(root, 0);
+	return to_string_rec(root);
+}
+
+std::string rbtree::to_string_pretty() {
+	return to_string_pretty_rec(root, 0);
 }
 
 /**
@@ -416,6 +420,26 @@ void rbtree::transplant(rbnode *u, rbnode *v) {
 }
 
 /**
+ * Recursively creates a string representing a pre-order traversal
+ * of the red-black tree rooted at the given node.
+ *
+ * @param root - The root of the subtree to convert to a string.
+ * @return A string representing a pre-order traversal of the
+ * 			red-black tree rooted at the given node.
+ */
+string rbtree::to_string_rec(rbnode *root) {
+	if (root->is_nil())
+		return "f";
+	string str = std::to_string(root->get_key());
+	str += root->get_color() == RED ? "r" : "b";
+	str += ",";
+	str += to_string_rec(root->get_left());
+	str += ",";
+	str += to_string_rec(root->get_right());
+	return str;
+}
+
+/**
  * Recursively creates a string representation of the red-black tree
  * rooted at the given node by doing an in-order traversal.
  *
@@ -423,11 +447,11 @@ void rbtree::transplant(rbnode *u, rbnode *v) {
  * @param space - The number of tabs to indent the current node.
  * @return A string representation of the subtree rooted at root.
  */
-string rbtree::to_string_rec(rbnode *root, int space) {
+string rbtree::to_string_pretty_rec(rbnode *root, int space) {
 	if (root->is_nil()) {
 		return "";
 	}
-	string str = to_string_rec(root->get_right(), space + 2);
+	string str = to_string_pretty_rec(root->get_right(), space + 2);
 	str += "\n";
 	for (int i = 0; i < space; i++) {
 		str += "\t";
@@ -435,6 +459,6 @@ string rbtree::to_string_rec(rbnode *root, int space) {
 	str += ::to_string(root->get_key());
 	str += root->get_color() == RED ? "r" : "b";
 	str += "\n";
-	str += to_string_rec(root->get_left(), space + 2);
+	str += to_string_pretty_rec(root->get_left(), space + 2);
 	return str;
 }

@@ -53,13 +53,24 @@ public:
 	void delete_node(int key);
 
 	/**
+	 * Returns a string representation of a pre-order traversal of
+	 * the rbtree. Each node is shown in the form 'kc', where 'k' is
+	 * integer key value and 'c' is the color of the node represented
+	 * as 'r' for red and 'b' for black, and each leaf node is represented
+	 * with an 'f'.
+	 *
+	 * @return A pre-order traversal as a string.
+	 */
+	std::string to_string();
+
+	/**
 	 * Creates a sideways depiction of the tree as a string. Each node is shown
 	 * in the form kc, where k is integer key value and c is the color of the node
 	 * represented as r for red and b for black.
 	 *
 	 * @return A string representation of the contents of the tree.
 	 */
-	std::string to_string();
+	std::string to_string_pretty();
 
 private:
 
@@ -79,7 +90,9 @@ private:
 
 	void transplant(rbnode *u, rbnode *v);
 
-	std::string to_string_rec(rbnode *root, int space);
+	std::string to_string_rec(rbnode *root);
+
+	std::string to_string_pretty_rec(rbnode *root, int space);
 };
 
 #endif //RBTREE_H

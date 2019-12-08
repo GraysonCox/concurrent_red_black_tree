@@ -2,8 +2,6 @@
 // Created by Grayson Cox on 11/20/19.
 //
 
-#include <cstdio> // TODO: Remove when done debugging.
-#include <cerrno>
 #include "model/rbnode.h"
 
 rbnode::rbnode(int key, rbnode_color color) : key(key),
@@ -68,7 +66,6 @@ void rbnode::read_unlock() {
 void rbnode::write_lock() {
 	pthread_mutex_lock(&m);
 	pthread_t self = pthread_self();
-//	printf("%d: Locking node %d\n", self, key); // TODO: Remove when done debugging
 	if (!pthread_equal(self, write_owner)) { // This is my fix for recursive calls to write_lock().
 		while (is_busy || num_readers != 0)
 			pthread_cond_wait(&can_write, &m);
@@ -81,7 +78,6 @@ void rbnode::write_lock() {
 void rbnode::write_unlock() {
 	pthread_mutex_lock(&m);
 	pthread_t self = pthread_self();
-//	printf("%d: Unlocking node %d\n", self, key); // TODO: Remove when done debugging
 	if (pthread_equal(self, write_owner)) { // This is my fix for recursive calls to write_lock().
 		is_busy = false;
 		if (num_readers_waiting > 0)

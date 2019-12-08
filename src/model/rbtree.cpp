@@ -123,7 +123,6 @@ void rbtree::delete_node(int key) {
 		}
 		z->write_lock();
 		locked_nodes.push(z);
-		// TODO: Is this the tightest bound required for restructuring?
 		if (z->get_parent()->get_color() == RED && z->get_color() == RED) {
 			// If two consecutive nodes in the path are red, all preceding nodes can be unlocked, I think.
 			while (locked_nodes.front() != z->get_parent()) {
@@ -148,7 +147,7 @@ void rbtree::delete_node(int key) {
 		locked_nodes.push(x);
 		transplant(z, z->get_right());
 	} else if (z->get_right()->is_nil()) {
-		x = z->get_left(); // TODO: Maybe delete z->get_right().
+		x = z->get_left();
 		x->write_lock();
 		locked_nodes.push(x);
 		transplant(z, z->get_left());
@@ -185,7 +184,7 @@ void rbtree::delete_node(int key) {
 	}
 	while (!locked_nodes.empty()) { // Unlock all nodes.
 		locked_nodes.front()->write_unlock();
-		locked_nodes.pop(); // TODO: De-allocate z.
+		locked_nodes.pop();
 	}
 }
 
@@ -227,7 +226,7 @@ void rbtree::insert_fixup(rbnode *z) {
 	rbnode *y;
 	while (z->get_parent()->get_color() == RED) {
 		if (z->get_parent() ==
-			z->get_parent()->get_parent()->get_left()) { // z's parent is left child. TODO: Is it okay not to lock z's uncle?
+			z->get_parent()->get_parent()->get_left()) { // z's parent is left child.
 			y = z->get_parent()->get_parent()->get_right();
 			y->write_lock();
 			if (y->get_color() == RED) {
@@ -417,20 +416,20 @@ void rbtree::rotate_counter_clockwise(rbnode *x) {
 
 /**
  * Replaces the subtree rooted at u with the subtree rooted at v.
- * Calling thread must have lock on u, u->get_parent(), v, and maybe v->get_parent(). // TODO
+ * Calling thread must have lock on u, u->get_parent(), v, and maybe v->get_parent().
  *
  * @param u - The node to be replaced by v.
  * @param v - The node to take the place of u.
  */
 void rbtree::transplant(rbnode *u, rbnode *v) {
 	if (u->get_parent()->is_nil()) {
-		root = v; // TODO: Is it okay for the root to be null?
+		root = v;
 	} else if (u == u->get_parent()->get_left()) {
 		u->get_parent()->set_left(v);
 	} else {
 		u->get_parent()->set_right(v);
 	}
-	if (v != nullptr) { // TODO: Do I need this check?
+	if (v != nullptr) {
 		v->set_parent(u->get_parent());
 	}
 }

@@ -42,7 +42,7 @@ void *reader_thread_func(void *name) {
 		switch (op->op) {
 			case SEARCH:
 				if (red_black_tree->search(op->arg))
-					search_result_string = "true"; // TODO: Remove all magic strings.
+					search_result_string = "true";
 				else
 					search_result_string = "false";
 				output_file_writer->write_line(
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
 		delete (string *) thr->data;
 		delete thr;
 	}
-	delete red_black_tree; // TODO: Delete red_black_tree.
+	delete red_black_tree;
 	delete read_tasks;
 	delete write_tasks;
 	delete tmp_read_tasks;

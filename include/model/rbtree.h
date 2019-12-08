@@ -30,6 +30,10 @@ public:
 	 */
 	explicit rbtree(std::vector<rbnode *> *preorder);
 
+	/**
+	 * Default destructor that recursively deletes every node in the
+	 * red-black tree.
+	 */
 	virtual ~rbtree();
 
 	/**

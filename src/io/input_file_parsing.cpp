@@ -35,7 +35,6 @@ int parse_num_threads(file_reader *reader) {
 	reader->read_token();
 	string str = reader->read_token();
 	int num_threads = stoi(str);
-	// TODO: Error handling
 	return num_threads;
 }
 
@@ -44,8 +43,10 @@ void parse_tasks(file_reader *reader, queue<operation> *read_tasks, queue<operat
 	operation *task;
 	while (!reader->is_end_of_file()) {
 		str = reader->read_token();
-		task = new operation(str);
+		if (str == "||")
+			continue;
 
+		task = new operation(str);
 		switch (task->op) {
 			case SEARCH:
 				read_tasks->push(*task);
@@ -54,11 +55,8 @@ void parse_tasks(file_reader *reader, queue<operation> *read_tasks, queue<operat
 			case DELETE:
 				write_tasks->push(*task);
 				break;
-			default:; // TODO: Handle error.
-		}
-
-		if (!reader->is_end_of_file()) {
-			reader->read_token();
+			default:
+				cerr << "Invalid operation: " + str << endl;
 		}
 	}
 }

@@ -4,6 +4,14 @@
 
 #include "model/operation_queue.h"
 
+operation_queue::operation_queue(const std::queue<operation> &q) : q(q) {
+	pthread_mutex_init(&m, nullptr);
+}
+
+operation_queue::~operation_queue() {
+	pthread_mutex_destroy(&m);
+}
+
 operation *operation_queue::dequeue() {
 	operation *next_item;
 	pthread_mutex_lock(&m);

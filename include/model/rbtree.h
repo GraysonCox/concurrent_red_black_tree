@@ -31,6 +31,12 @@ public:
 	explicit rbtree(std::vector<rbnode *> *preorder);
 
 	/**
+	 * Default destructor that recursively deletes every node in the
+	 * red-black tree.
+	 */
+	virtual ~rbtree();
+
+	/**
 	 * Synchronously searches for the given key in the tree.
 	 *
 	 * @param key - The key to search for in the tree
